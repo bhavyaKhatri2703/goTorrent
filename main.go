@@ -3,6 +3,8 @@ package main
 import (
 	"crypto/sha1"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"strconv"
 
@@ -111,7 +113,11 @@ func calcInfoHash(infoDict map[string]interface{}) []byte {
 
 // func calcPiecesHash
 
-func getTrackerDetails(dict map[string]interface{}) tracker {
+func getTrackerDetails(torrfile string) tracker {
+	data := readfile(torrfile)
+	ans, _ := decode(data)
+
+	dict := ans.(map[string]interface{})
 	length := dict["info"].(map[string]interface{})["piece length"]
 	pieces := dict["info"].(map[string]interface{})["pieces"].([]byte)
 
@@ -127,7 +133,7 @@ func getTrackerDetails(dict map[string]interface{}) tracker {
 	tr := tracker{url: string(dict["announce"].([]byte)), len: length.(int), infohash: calcInfoHash(dict["info"].(map[string]interface{})), pieces: pieces,
 		piecesHash: piecesHash,
 	}
-	fmt.Println(tr)
+
 	return tr
 }
 func main() {
@@ -137,11 +143,22 @@ func main() {
 	// input := `d8:announce41:http://bttracker.debian.org:6969/announce7:comment35:"Debian CD from cdimage.debian.org"13:creation datei1573903810e9:httpseedsl145:https://cdimage.debian.org/cdimage/release/10.2.0//srv/cdbuilder.debian.org/dst/deb-cd/weekly-builds/amd64/iso-cd/debian-10.2.0-amd64-netinst.iso145:https://cdimage.debian.org/cdimage/archive/10.2.0//srv/cdbuilder.debian.org/dst/deb-cd/weekly-builds/amd64/iso-cd/debian-10.2.0-amd64-netinst.isoe4:infod6:lengthi351272960e4:name31:debian-10.2.0-amd64-netinst.iso12:piece lengthi262144e6:pieces26800:�����PS�^�� (binary blob of the hashes of each piece)ee`
 	// ans, end := decode(input)
 	// fmt.Println(ans, end)
-	data := readfile("sample.torrent")
-	ans, _ := decode(data)
+	// data := readfile("sample.torrent")
+	// ans, _ := decode(data)
 
-	dict := ans.(map[string]interface{})
+	// dict := ans.(map[string]interface{})
 	// fmt.Println(dict["info"].(map[string]interface{})["pieces"])
-	getTrackerDetails(dict)
+	url := getPeers()
+	fmt.Println(url)
+	resp, er := http.Get(url)
+	body, _ := io.ReadAll(resp.Body)
+	if er == nil {
+		fmt.Println((body))
+	}
+
+	bodyDecoded, _ := decode(body)
+	peers := parsePeers(bodyDecoded.(map[string]interface{})["peers"].([]byte))
+	tcp_conn(peers[0])
+	// fmt.Println(binary.BigEndian.Uint16(bodyDecoded.(map[string]interface{})["peers"].([]byte)[4:6]))
 
 }
