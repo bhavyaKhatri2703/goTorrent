@@ -2,7 +2,6 @@ package main
 
 import (
 	"crypto/sha1"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -149,11 +148,11 @@ func main() {
 	// dict := ans.(map[string]interface{})
 	// fmt.Println(dict["info"].(map[string]interface{})["pieces"])
 	url := getPeers()
-	fmt.Println(url)
+	// fmt.Println(url)
 	resp, er := http.Get(url)
 	body, _ := io.ReadAll(resp.Body)
 	if er == nil {
-		fmt.Println((body))
+		// fmt.Println((body))
 	}
 
 	bodyDecoded, _ := decode(body)

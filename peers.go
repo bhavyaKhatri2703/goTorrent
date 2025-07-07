@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/binary"
+	"fmt"
+	"io"
 	"net"
 	"net/url"
 	"strconv"
@@ -45,6 +47,30 @@ func parsePeers(s []byte) []string {
 }
 
 func tcp_conn(peer string) {
+	tr := getTrackerDetails("sample.torrent")
 	conn, _ := net.Dial("tcp", peer)
+	_, err := conn.Write(handshake(&tr))
+	if err == nil {
+		fmt.Println(conn)
+	}
+
+	resp := make([]byte, 68)
+	_, err = io.ReadFull(conn, resp)
+	fmt.Println(resp)
 	defer conn.Close()
+}
+
+func handshake(tr *tracker) []byte {
+	buff := make([]byte, 19+49)
+
+	buff[0] = byte(19)
+
+	i := 1
+
+	i += copy(buff[i:], "BitTorrent protocol")
+	i += copy(buff[i:], make([]byte, 8))
+	i += copy(buff[i:], tr.infohash)
+	i += copy(buff[i:], "-GO0001-bhavyakhatri")
+
+	return buff
 }
